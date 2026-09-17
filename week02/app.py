@@ -1,11 +1,51 @@
 from flask import Flask, jsonify, request, Response, make_response
 app = Flask(__name__)
+app.json.sort_keys = False
+# Tham so phan trang
+DEFAULT_SIZE, MAX_SIZE = 20, 100
 BOOKS = []
 _next_id = 1
-# GET /books - list books
+# list + filter + pagination + links
 @app.get("/books")
 def list_books():
-    return jsonify({"data": BOOKS, "total": len(BOOKS)}), 200
+    try:
+        page = int(request.args.get("page", 1))
+        size = int(request.args.get("size", DEFAULT_SIZE))
+    except ValueError:
+        return jsonify (error = "page va size phai la so nguyen"), 400
+    page = max(page, 1)
+    size = max(min(size, MAX_SIZE), 1)
+
+    # filter: author chinh xac, q trong title
+    fil = BOOKS
+    author = request.args.get("author")
+    if author:
+        fil = [b for b in fil if b["author"] == author]
+    q = request.args.get("q")
+    if q:
+        fil = [b for b in fil if q.lower() in b["title"].lower()]
+
+    #pagination
+    total = len(fil)
+    start = (page - 1) * size
+    end = start + size
+    items = fil[start:end]
+    last = (total + size - 1) // size
+
+    #HATEOAS links
+    def u(p):
+        return f"/books?page={p}&size={size}"
+    links = {"self": {"href": u(page)}, "first": {"href": u(1)}, "last": {"href": u(max(1, last))}}
+    if page > 1:
+        links["prev"] = {"href": u(page - 1)}
+    if end < total:
+        links["next"] = {"href" : u(page + 1)}
+    body = {"data": items,
+             "pagination": {"page": page, "size": size, "total": total, "total_pages": last},
+               "_links": links}
+    resp = make_response(jsonify(body), 200)
+    resp.headers["Cache-Control"] = "public, max-age=30"
+    return resp
 
 # GET /books/<book_id> - cache 60s
 @app.get("/books/<int:book_id>")
