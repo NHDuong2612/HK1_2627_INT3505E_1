@@ -1,10 +1,30 @@
 from flask import Flask, jsonify, request, Response, make_response
+import sqlite3
 app = Flask(__name__)
+DB_NAME = "orders.db"
 app.json.sort_keys = False
 # Tham so phan trang
 DEFAULT_SIZE, MAX_SIZE = 20, 100
 BOOKS = []
 _next_id = 1
+
+def get_db():
+    conn = sqlite3.connext(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    conn.execute("""CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        customer_name TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL,
+        price REAL NOT NULL
+    )""")
+    conn.commit()
+    conn.close()
+
 # list + filter + pagination + links
 @app.get("/books")
 def list_books():
@@ -121,3 +141,7 @@ def create_book():
     return resp
 if __name__ == "__main__":
     run = app.run(host="127.0.0.1", port = 5000, debug = True)
+
+@app.get("/orders")
+def list_orders():
+    
