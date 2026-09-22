@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request, Response, make_response
 import sqlite3
+import hashlib
 app = Flask(__name__)
-DB_NAME = "orders.db"
+DB_NAME = "books.db"
 app.json.sort_keys = False
 # Tham so phan trang
 DEFAULT_SIZE, MAX_SIZE = 20, 100
@@ -13,20 +14,24 @@ def get_db():
 
 def init_db():
     conn = get_db()
-    conn.execute("""CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_name TEXT NOT NULL,
-        product_name TEXT NOT NULL,
-        quantity INTEGER NOT NULL,
-        price REAL NOT NULL
-    )""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS books (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    author TEXT NOT NULL,
+                    isbn TEXT NOT NULL,
+                    price REAL NOT NULL,
+                    etag TEXT
+                    )
+                """)
     conn.commit()
     conn.close()
 
-# list + filter + pagination + links
-""" 
-BOOKS = []
-_next_id = 1
+def compute_etag(title, author, isbn, price):
+    content = f"{title}:{author}:{isbn}:{price}"
+    return hashlib.md5(content.encode("utf-8")).hexdigest()
+
+
+#  filter + pagination + links
 @app.get("/books")
 def list_books():
     try:
@@ -37,33 +42,46 @@ def list_books():
     page = max(page, 1)
     size = max(min(size, MAX_SIZE), 1)
 
-    # filter: author chinh xac, q trong title
-    fil = BOOKS
-    author = request.args.get("author")
+    where_clauses = []
+    params = []
+
+    author = request.get("author")
     if author:
-        fil = [b for b in fil if b["author"] == author]
-    q = request.args.get("q")
+        where_clauses.append("author = ?")
+        params.append(author)
+
+    q = request.get("q")
     if q:
-        fil = [b for b in fil if q.lower() in b["title"].lower()]
+        where_clauses.append("LOWER(title) LIKE ?")
+        params.append(f"%{q.lower()}%")
 
-    #pagination
-    total = len(fil)
-    start = (page - 1) * size
-    end = start + size
-    items = fil[start:end]
-    last = (total + size - 1) // size
+    where_str = f"WHERE {' AND'.join(where_clauses)}" if where_clauses else ""
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT COUNT(*) FROM books {where_str}", params)
+    total = cursor.fetchone()[0]
 
-    #HATEOAS links
+    offset = (page - 1) * size
+    cursor.execute(f"SELECT * FROM books {where_str} LIMIT ? OFFSET?", params + [size, offset])
+    rows = cursor.fetchall()
+    items = [dict(row) for row in rows]
+    conn.close()
+    total_pages = (total + size -1) // size
+
     def u(p):
         return f"/books?page={p}&size={size}"
-    links = {"self": {"href": u(page)}, "first": {"href": u(1)}, "last": {"href": u(max(1, last))}}
+    links = {"self": {"href": u(page)}, "first": {"href": u(1)}, "last": {"href": u(max(1,total_pages))}}
     if page > 1:
         links["prev"] = {"href": u(page - 1)}
-    if end < total:
-        links["next"] = {"href" : u(page + 1)}
-    body = {"data": items,
-             "pagination": {"page": page, "size": size, "total": total, "total_pages": last},
-               "_links": links}
+    if page < total_pages and total > 0:
+        links["next"] = {"href": u(page + 1)}
+
+    body = {
+        "data": items,
+        "pagination": {"page": page, "size": size, "total": total, "total_pages": total_pages},
+        "_links": links
+    }
+
     resp = make_response(jsonify(body), 200)
     resp.headers["Cache-Control"] = "public, max-age=30"
     return resp
@@ -71,81 +89,190 @@ def list_books():
 # GET /books/<book_id> - cache 60s
 @app.get("/books/<int:book_id>")
 def get_book(book_id):
-    book = next((b for b in BOOKS if b["id"] == book_id), None)
-    if not book:
-        return jsonify(error = "Khong tim thay book"), 404
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM books WHERE id = ?", (book_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return jsonify(error = "khong tim thay book"), 404
+    book = dict(row)
+    etag = book.pop("etag", None)
+    if not etag:
+        etag = compute_etag(book["title"], book["author"], book["isbn"], book["price"])
+    if_none_match = request.headers.get("If_None_Match")
+    if if_none_match and if_none_match.strip('"') == etag:
+        resp = make_response("", 304)
+        resp.headers["ETag"] = f'"{etag}"'
+        return resp
     resp = make_response(jsonify(book), 200)
-    resp.headers["Cache=Control"] = "max-age=60"
+    resp.headers["Cache-Control"] = "max-age=60"
+    resp.headers["ETag"] = f'"{etag}"'
     return resp
 
 # PUT /books/<book_id> - update toan bo field
 @app.put("/books/<int:book_id>")
-def put(book_id):
-    book = next((b for b in BOOKS if b["id"] == book_id), None)
-    if not book:
-        return jsonify(error = "Khong tim thay book"), 404
-    data = request.get_json(silent = True) or {}
+def update_book(book_id):
     if not request.is_json:
-        return jsonify(error = "Request phai la JSON"), 415
-    title = data.get("title", "")
-    author = data.get("author", "")
-    isbn = data.get("isbn", "")
-    price = data.get("price", 0)
-    if not title or not author or not isbn or price < 0:
-        return jsonify(error = "Phai co du cac field"), 422
-    book.update(data or {})
-    return jsonify(book), 200
+        return jsonify(error="Request phai la JSON"), 415
 
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title", "")).strip()
+    author = str(data.get("author", "")).strip()
+    isbn = str(data.get("isbn", "")).strip()
+    price = data.get("price")
+
+    if not title or not author or not isbn or price is None or price < 0:
+        return jsonify(error="Phai co du cac field hop le"), 422
+
+    etag = compute_etag(title, author, isbn, price)
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM books WHERE id = ?", (book_id,))
+    if not cursor.fetchone():
+        conn.close()
+        return jsonify(error="Khong tim thay book"), 404
+
+    cursor.execute(
+        "UPDATE books SET title = ?, author = ?, isbn = ?, price = ?, etag = ? WHERE id = ?",
+        (title, author, isbn, price, etag, book_id),
+    )
+    conn.commit()
+
+    cursor.execute(
+        "SELECT id, title, author, isbn, price FROM books WHERE id = ?",
+        (book_id,),
+    )
+    updated_book = dict(cursor.fetchone())
+    conn.close()
+
+    return jsonify(updated_book), 200
 # PATCH /books/<book_id> - update 1 so field
 @app.patch("/books/<int:book_id>")
-def patch(book_id):
-    book = next((b for b in BOOKS if b["id"] == book_id), None)
-    if not book:
-        return jsonify(error = "Khong tim thay book"), 404
-    data = request.get_json(silent = True) or {}
+def patch_book(book_id):
     if not request.is_json:
-        return jsonify(error = "Request phai la JSON"), 415
-    if data.get("price", 0) < 0:
-        return jsonify(error = "Price phai >= 0"), 422
-    book.update(data or {})
-    return jsonify(book), 200
+        return jsonify(error="Request phai la JSON"), 415
+
+    data = request.get_json(silent=True) or {}
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT title, author, isbn, price FROM books WHERE id = ?", (book_id,)
+    )
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify(error="Khong tim thay book"), 404
+
+    current_book = dict(row)
+    fields, params = [], []
+
+    if "title" in data:
+        fields.append("title = ?")
+        params.append(str(data["title"]).strip())
+        current_book["title"] = str(data["title"]).strip()
+
+    if "author" in data:
+        fields.append("author = ?")
+        params.append(str(data["author"]).strip())
+        current_book["author"] = str(data["author"]).strip()
+
+    if "isbn" in data:
+        fields.append("isbn = ?")
+        params.append(str(data["isbn"]).strip())
+        current_book["isbn"] = str(data["isbn"]).strip()
+
+    if "price" in data:
+        try:
+            p_val = float(data["price"])
+            if p_val < 0:
+                conn.close()
+                return jsonify(error="Price phai >= 0"), 422
+            fields.append("price = ?")
+            params.append(p_val)
+            current_book["price"] = p_val
+        except ValueError:
+            conn.close()
+            return jsonify(error="Price phai la so"), 422
+
+    if not fields:
+        conn.close()
+        return jsonify(error="Khong co field hop le de update"), 422
+
+    # Tính toán lại ETag mới
+    new_etag = compute_etag(
+        current_book["title"],
+        current_book["author"],
+        current_book["isbn"],
+        current_book["price"],
+    )
+    fields.append("etag = ?")
+    params.append(new_etag)
+
+    params.append(book_id)
+    cursor.execute(f"UPDATE books SET {', '.join(fields)} WHERE id = ?", params)
+    conn.commit()
+
+    cursor.execute(
+        "SELECT id, title, author, isbn, price FROM books WHERE id = ?",
+        (book_id,),
+    )
+    updated_book = dict(cursor.fetchone())
+    conn.close()
+
+    return jsonify(updated_book), 200
 
 # DELETE /books/<book_id> - delete book
 @app.delete("/books/<int:book_id>")
-def delete(book_id):
-    book = next((b for b in BOOKS if b["id"] == book_id), None)
-    if not book:
-        return jsonify(error = "Khong tim thay book"), 404
-    BOOKS.remove(book)
+def delete_book(book_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM books WHERE id = ?", (book_id,))
+    conn.commit()
+    deleted_count = cursor.rowcount
+    conn.close()
+
+    if deleted_count == 0:
+        return jsonify(error="Khong tim thay book"), 404
+
     return "", 204
 
 # POST /books - create a new book
 @app.post("/books")
 def create_book():
-    global _next_id
-    data = request.get_json(silent = True) or {}
+    data = request.get_json(silent=True) or {}
     if not request.is_json:
         return jsonify(error = "Request phai la JSON"), 415
-    title = data.get("title", "")
-    author = data.get("author", "")
-    isbn = data.get("isbn", "")
-    price = data.get("price", 0)
-    if price < 0:
-        return jsonify(error = "Price phai >= 0"), 422
-    if not title or not author or not isbn:
-        return jsonify(error = "Phai co du cac field"), 422
-    book = {"id": _next_id, "title": title, "author": author, "isbn": isbn, "price": price}
-    BOOKS.append(book)
-    _next_id += 1
-    resp = make_response(jsonify(book), 201)
-    resp.headers["Location"] = f"/books/{book['id']}"
+    title = data.get("title")
+    author = data.get("author")
+    isbn = data.get("isbn")
+    price = data.get("price")
+
+    if not title or not author:
+        return jsonify(error = "title va author la bat buoc"), 422
+    etag = compute_etag(title, author, isbn, price)
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO books (title, author, isbn, price, etag) VALUES (?, ?, ?, ?, ?)",
+                   (title, author, isbn, price, etag),)
+    conn.commit()
+    new_book_id = cursor.lastrowid
+
+    cursor.execute("SELECT * FROM books WHERE id = ?", (new_book_id,),)
+    new_book = dict(cursor.fetchone())
+    conn.close()
+    resp = make_response(jsonify(new_book), 201)
+    resp.headers["Location"] = f"/books/{new_book_id}"
     return resp
+
+
+
+
 """
-
-
-
-
-
 @app.get("/orders")
 def list_orders():
     try:
@@ -239,11 +366,11 @@ def create_order():
     resp.headers["Location"] = f"/orders/{new_order_id}"
     return resp
 
-@app.put("/orders/<int:oid")
+@app.put("/orders/<int:oid>")
 def update_order(oid):
     if not request.is_json:
         return jsonify(error = "Request phai la JSON"), 415
-    data = request.get_json(Silent = True) or {}
+    data = request.get_json(silent = True) or {}
     customer_name = data.get("customer_name", "") 
     product_name = data.get("product_name", "")
     quantity =data.get("quantity")
@@ -272,7 +399,7 @@ def update_order(oid):
 def patch_order(oid):
     if not request.is_json:
         return jsonify(error = "request phai la JSON"), 415
-    data = request.get_json(Silent = True) or {}
+    data = request.get_json(silent = True) or {}
     conn = get_db()
     cursor = conn.sursor()
     cursor.execute("SELECT * FROM orders WHERE id =?", (oid,))
@@ -316,7 +443,7 @@ def patch_order(oid):
 
     return jsonify(updated_order), 200
     
-@app.delete("/orders/<int:oid")
+@app.delete("/orders/<int:oid>")
 def delete_order(oid):
     conn = get_db()
     cursor = conn.cursor()
@@ -327,6 +454,8 @@ def delete_order(oid):
     if deleted_count == 0:
         return jsonify(error = "khong tim thay id"), 404
     return "", 204
+
+"""
 
 if __name__ == "__main__":
     init_db()
