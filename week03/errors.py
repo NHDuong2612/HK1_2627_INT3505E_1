@@ -1,6 +1,8 @@
 from flask import request, jsonify
 import uuid
 
+ERROR_BASE = "https://api.example.com/probs"
+
 class ApiProblem(Exception):
     def __init__(self, status_code, title, detail=None, type_path=None, **extra):
         self.status_code = status_code
@@ -17,6 +19,7 @@ class ApiProblem(Exception):
             "detail": self.detail
         }
     """
+    @staticmethod
     def _problem(status, title, detail=None, type_part=None, **extra):
         body ={
             "type": f"{ERROR_BASE}/{type_part}" if type_part else "about:blank",
