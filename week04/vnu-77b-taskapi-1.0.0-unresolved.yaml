@@ -1,0 +1,268 @@
+openapi: 3.0.3
+
+info:
+  title: Tasks API
+  version: 1.0.0
+  description: Quản lý task nội bộ.
+
+server:
+  -url: http://localhost:5000/v1.
+  
+security:
+  - bearerAuth: []
+
+tags:
+  - name: tasks
+    description: Quản lý task
+
+paths:
+
+  /tasks:
+    get:
+      tags: [tasks]
+      summary: List tasks
+      operationId: listTasks
+      parameters:
+        - $ref: '#/components/parameters/PageLimit'
+        - $ref: '#/components/parameters/StatusFilter'
+      responses:
+        '200':
+          description: Danh sách task
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [tasks]
+      summary: Create task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+      responses:
+        '201':
+          description: Tạo task thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+
+  /tasks/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+
+    get:
+      tags: [tasks]
+      summary: Get task
+      operationId: getTaskById
+      responses:
+        '200':
+          description: Thông tin task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [tasks]
+      summary: Update task
+      operationId: patchTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskInput'
+      responses:
+        '200':
+          description: Cập nhật task thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [tasks]
+      summary: Delete task
+      operationId: deleteTask
+      responses:
+        '204':
+          description: Xóa task thành công
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+components:
+
+  schemas:
+
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - priority
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+        status:
+          type: string
+          enum: [open, done]
+        priority:
+          type: string
+          enum: [low, normal, high]
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+          format: uuid
+
+
+    CreateTaskInput:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+          enum: [open, done]
+          default: open
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+          format: uuid
+
+
+    UpdateTaskInput:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+        status:
+          type: string
+          enum: [open, done]
+        priority:
+          type: string
+          enum: [low, normal, high]
+        dueDate:
+          type: string
+          format: date
+        assigneeId:
+          type: string
+          format: uuid
+
+
+    Error:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+
+
+  parameters:
+
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    StatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [open, done]
+
+
+  responses:
+
+    Unauthorized:
+      description: Chưa xác thực
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Không tìm thấy task
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Dữ liệu không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/vnu-77b/taskapi/1.0.0
