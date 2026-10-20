@@ -1,0 +1,28 @@
+PS week06> curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books -H "Content-Type: application/json" -d @book.json
+
+HTTP/1.1 201 CREATED
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:03:34 GMT
+Content-Type: application/json
+Content-Length: 261
+Location: /api/v1/books/2
+Connection: close
+
+{
+  "id": 2,
+  "title": "SOA Lab 1",
+  "isbn": "9780201633610",
+  "price_vnd": 120000,
+  "stock": 5,
+  "category": {
+    "id": 1,
+    "name": "Technology",
+    "slug": "tech"
+  },
+  "authors": [
+    {
+      "id": 1,
+      "name": "Robert C. Martin"
+    }
+  ]
+}

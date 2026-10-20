@@ -1,0 +1,8 @@
+PS week06> curl.exe -sS -i -X DELETE http://127.0.0.1:5000/api/v1/books/2
+
+HTTP/1.1 204 NO CONTENT
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:03:35 GMT
+Content-Type: text/html; charset=utf-8
+Connection: close
+

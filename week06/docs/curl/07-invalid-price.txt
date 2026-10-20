@@ -1,0 +1,12 @@
+PS week06> curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books -H "Content-Type: application/json" -d @book_invalid.json
+
+HTTP/1.1 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:03:34 GMT
+Content-Type: application/json
+Content-Length: 50
+Connection: close
+
+{
+  "error": "-1 is less than the minimum of 0"
+}

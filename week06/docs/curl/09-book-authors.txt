@@ -1,0 +1,16 @@
+PS week06> curl.exe -sS -i http://127.0.0.1:5000/api/v1/books/2/authors
+
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:03:35 GMT
+Content-Type: application/json
+Content-Length: 89
+Connection: close
+
+[
+  {
+    "id": 1,
+    "name": "Robert C. Martin",
+    "bio": "Software developer"
+  }
+]

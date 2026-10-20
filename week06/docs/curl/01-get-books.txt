@@ -1,0 +1,29 @@
+PS week06> curl.exe -sS -i http://127.0.0.1:5000/api/v1/books
+
+HTTP/1.1 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:03:34 GMT
+Content-Type: application/json
+Content-Length: 303
+Connection: close
+
+[
+  {
+    "id": 1,
+    "title": "Clean Code",
+    "isbn": "9780132350884",
+    "price_vnd": 450000,
+    "stock": 10,
+    "category": {
+      "id": 1,
+      "name": "Technology",
+      "slug": "tech"
+    },
+    "authors": [
+      {
+        "id": 1,
+        "name": "Robert C. Martin"
+      }
+    ]
+  }
+]

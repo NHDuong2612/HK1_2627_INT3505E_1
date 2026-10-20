@@ -1,0 +1,72 @@
+[
+  {
+    "case": "01-get-books",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/books"
+  },
+  {
+    "case": "02-create-book",
+    "status": 201,
+    "command": "curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books -H \"Content-Type: application/json\" -d @book.json"
+  },
+  {
+    "case": "03-get-book",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/books/2"
+  },
+  {
+    "case": "04-update-book",
+    "status": 200,
+    "command": "curl.exe -sS -i -X PUT http://127.0.0.1:5000/api/v1/books/2 -H \"Content-Type: application/json\" -d @book_update.json"
+  },
+  {
+    "case": "05-create-review",
+    "status": 201,
+    "command": "curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books/2/reviews -H \"Content-Type: application/json\" -d @review.json"
+  },
+  {
+    "case": "06-get-reviews",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/books/2/reviews"
+  },
+  {
+    "case": "07-invalid-price",
+    "status": 400,
+    "command": "curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books -H \"Content-Type: application/json\" -d @book_invalid.json"
+  },
+  {
+    "case": "08-duplicate-isbn",
+    "status": 409,
+    "command": "curl.exe -sS -i -X POST http://127.0.0.1:5000/api/v1/books -H \"Content-Type: application/json\" -d @book.json"
+  },
+  {
+    "case": "09-book-authors",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/books/2/authors"
+  },
+  {
+    "case": "10-author-books",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/authors/1/books"
+  },
+  {
+    "case": "11-categories",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/categories"
+  },
+  {
+    "case": "12-users",
+    "status": 200,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/users"
+  },
+  {
+    "case": "13-delete-book",
+    "status": 204,
+    "command": "curl.exe -sS -i -X DELETE http://127.0.0.1:5000/api/v1/books/2"
+  },
+  {
+    "case": "14-get-deleted-book",
+    "status": 404,
+    "command": "curl.exe -sS -i http://127.0.0.1:5000/api/v1/books/2"
+  }
+]

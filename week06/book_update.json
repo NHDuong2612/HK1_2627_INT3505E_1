@@ -1,0 +1,10 @@
+{
+  "title": "SOA Lab 1 Updated",
+  "isbn": "9780201633610",
+  "price_vnd": 150000,
+  "stock": 0,
+  "category_id": 1,
+  "author_ids": [
+    1
+  ]
+}
