@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from flask import Blueprint, jsonify, request
 from jsonschema import validate, ValidationError
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload, selectinload
 from models import db, Book, Author, Category, User, Review
 from routes.pagination import parse_sort, apply_cursor, build_response, MAX_INT
@@ -27,6 +27,14 @@ def check_book_data(data):
 
 @books.get("")
 def get_books():
+    strategy = request.args.get("strategy", "cursor")
+    if strategy not in ("offset", "cursor"):
+        return jsonify({"error": "bad_strategy"}), 400
+    if strategy == "offset" and "cursor" in request.args:
+        return jsonify({"error": "cursor_with_offset"}), 400
+    if strategy == "cursor" and "offset" in request.args:
+        return jsonify({"error": "offset_with_cursor"}), 400
+
     try:
         limit = int(request.args.get("limit", "20"))
         if limit < 1:
@@ -44,20 +52,47 @@ def get_books():
         except ValueError:
             return jsonify({"error": "bad_category"}), 400
 
+    genre = request.args.get("genre")
+    if genre is not None and (not genre or genre != genre.strip() or len(genre) > 100):
+        return jsonify({"error": "bad_genre"}), 400
+
     sort = request.args.get("sort", "-id")
     try:
-        p, cols, desc = parse_sort(sort)
-        query = select(Book).options(joinedload(Book.category), selectinload(Book.authors))
-        query = query.order_by(*cols)
+        fields, cols = parse_sort(sort)
+        query = select(Book)
         if category is not None:
             query = query.where(Book.category_id == category)
-        query = apply_cursor(query, request.args.get("cursor"), sort, p, desc, category)
+        if genre is not None:
+            query = query.join(Category).where(Category.slug == genre)
+
+        if strategy == "offset":
+            try:
+                offset = int(request.args.get("offset", "0"))
+                if not 0 <= offset <= MAX_INT:
+                    raise ValueError
+            except ValueError:
+                return jsonify({"error": "bad_offset"}), 400
+            total = db.session.scalar(select(func.count()).select_from(query.subquery()))
+            rows = db.session.scalars(
+                query.options(joinedload(Book.category), selectinload(Book.authors))
+                .order_by(*cols).offset(offset).limit(limit)
+            ).all()
+            return jsonify({
+                "data": [book.to_dict() for book in rows],
+                "pagination": {"offset": offset, "limit": limit, "total": total,
+                               "has_next": offset + limit < total}
+            })
+
+        query = apply_cursor(query, request.args.get("cursor"), sort, fields, category, genre)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
 
     # Lay du 1 sach de biet con trang sau hay khong.
-    rows = db.session.scalars(query.limit(limit + 1)).all()
-    return build_response(rows[:limit], sort, p, len(rows) > limit, category)
+    rows = db.session.scalars(
+        query.options(joinedload(Book.category), selectinload(Book.authors))
+        .order_by(*cols).limit(limit + 1)
+    ).all()
+    return build_response(rows[:limit], sort, fields, len(rows) > limit, category, genre)
 
 
 @books.get("/<int:book_id>")

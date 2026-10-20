@@ -1,0 +1,951 @@
+{
+  "info": {
+    "name": "Week06 - BTVN 2 - Flask pagination",
+    "description": "Chay python seed_lab2.py, khoi dong app.py, sau do Run collection theo thu tu Offset -> Cursor -> Validation. Chi gui GET, khong sua du lieu. base_url mac dinh http://127.0.0.1:5000.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000",
+      "type": "string"
+    },
+    {
+      "key": "first_cursor",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "next_cursor",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "offset_first_ids",
+      "value": "[]",
+      "type": "string"
+    },
+    {
+      "key": "seen_ids",
+      "value": "[]",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Offset",
+      "item": [
+        {
+          "name": "01 - Offset trang dau",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&genre=tech&sort=-price,title&offset=0&limit=2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "-price,title"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Dung genre tech\", function () {",
+                  "  body.data.forEach(book => pm.expect(book.category.slug).to.eql(\"tech\"));",
+                  "});",
+                  "pm.test(\"Gia giam, title tang, id giam khi trung\", function () {",
+                  "  for (let i = 1; i < body.data.length; i++) {",
+                  "    const a = body.data[i - 1], b = body.data[i];",
+                  "    const ok = a.price_vnd > b.price_vnd ||",
+                  "      (a.price_vnd === b.price_vnd && (a.title < b.title ||",
+                  "       (a.title === b.title && a.id > b.id)));",
+                  "    pm.expect(ok).to.eql(true);",
+                  "  }",
+                  "});",
+                  "pm.test(\"Metadata offset\", function () {",
+                  "  pm.expect(body.pagination.offset).to.eql(0);",
+                  "  pm.expect(body.pagination.limit).to.eql(2);",
+                  "  pm.expect(body.pagination.total).to.be.at.least(body.data.length);",
+                  "  pm.expect(body.pagination.has_next).to.eql(2 < body.pagination.total);",
+                  "});",
+                  "pm.collectionVariables.set(\"offset_first_ids\", JSON.stringify(body.data.map(b => b.id)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Offset trang tiep",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&genre=tech&sort=-price,title&offset=2&limit=2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "-price,title"
+                },
+                {
+                  "key": "offset",
+                  "value": "2"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Dung genre tech\", function () {",
+                  "  body.data.forEach(book => pm.expect(book.category.slug).to.eql(\"tech\"));",
+                  "});",
+                  "pm.test(\"Gia giam, title tang, id giam khi trung\", function () {",
+                  "  for (let i = 1; i < body.data.length; i++) {",
+                  "    const a = body.data[i - 1], b = body.data[i];",
+                  "    const ok = a.price_vnd > b.price_vnd ||",
+                  "      (a.price_vnd === b.price_vnd && (a.title < b.title ||",
+                  "       (a.title === b.title && a.id > b.id)));",
+                  "    pm.expect(ok).to.eql(true);",
+                  "  }",
+                  "});",
+                  "pm.test(\"Offset bang 2, khong lap trang dau\", function () {",
+                  "  pm.expect(body.pagination.offset).to.eql(2);",
+                  "  const first = JSON.parse(pm.collectionVariables.get(\"offset_first_ids\"));",
+                  "  body.data.forEach(book => pm.expect(first).not.to.include(book.id));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - Offset vuot cuoi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&genre=tech&offset=999999&limit=2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "offset",
+                  "value": "999999"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Trang rong\", function () {",
+                  "  pm.expect(body.data).to.eql([]);",
+                  "  pm.expect(body.pagination.has_next).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 - Offset limit toi da",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&limit=1000",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "limit",
+                  "value": "1000"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Gioi han toi da 100\", function () {",
+                  "  pm.expect(body.pagination.limit).to.eql(100);",
+                  "  pm.expect(body.data.length).to.be.at.most(100);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cursor",
+      "item": [
+        {
+          "name": "05 - Cursor trang dau",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=tech&sort=-price,title&limit=2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "-price,title"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Chay seed_lab2.py truoc. Chay collection theo thu tu de lay cursor tu response."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Dung genre tech\", function () {",
+                  "  body.data.forEach(book => pm.expect(book.category.slug).to.eql(\"tech\"));",
+                  "});",
+                  "pm.test(\"Gia giam, title tang, id giam khi trung\", function () {",
+                  "  for (let i = 1; i < body.data.length; i++) {",
+                  "    const a = body.data[i - 1], b = body.data[i];",
+                  "    const ok = a.price_vnd > b.price_vnd ||",
+                  "      (a.price_vnd === b.price_vnd && (a.title < b.title ||",
+                  "       (a.title === b.title && a.id > b.id)));",
+                  "    pm.expect(ok).to.eql(true);",
+                  "  }",
+                  "});",
+                  "pm.test(\"Co trang tiep sau khi seed\", function () {",
+                  "  pm.expect(body.page.more).to.eql(true);",
+                  "  pm.expect(body.page.next).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"Trang dau giong offset\", function () {",
+                  "  pm.expect(body.data.map(b => b.id)).to.eql(JSON.parse(pm.collectionVariables.get(\"offset_first_ids\")));",
+                  "});",
+                  "pm.collectionVariables.set(\"first_cursor\", body.page.next);",
+                  "pm.collectionVariables.set(\"next_cursor\", body.page.next);",
+                  "pm.collectionVariables.set(\"seen_ids\", JSON.stringify(body.data.map(b => b.id)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 - Cursor trang tiep",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=tech&sort=-price,title&limit=2&cursor={{next_cursor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "-price,title"
+                },
+                {
+                  "key": "limit",
+                  "value": "2"
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{next_cursor}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Dung genre tech\", function () {",
+                  "  body.data.forEach(book => pm.expect(book.category.slug).to.eql(\"tech\"));",
+                  "});",
+                  "pm.test(\"Gia giam, title tang, id giam khi trung\", function () {",
+                  "  for (let i = 1; i < body.data.length; i++) {",
+                  "    const a = body.data[i - 1], b = body.data[i];",
+                  "    const ok = a.price_vnd > b.price_vnd ||",
+                  "      (a.price_vnd === b.price_vnd && (a.title < b.title ||",
+                  "       (a.title === b.title && a.id > b.id)));",
+                  "    pm.expect(ok).to.eql(true);",
+                  "  }",
+                  "});",
+                  "pm.test(\"Khong lap sach giua hai trang\", function () {",
+                  "  const seen = JSON.parse(pm.collectionVariables.get(\"seen_ids\"));",
+                  "  body.data.forEach(book => pm.expect(seen).not.to.include(book.id));",
+                  "});",
+                  "pm.test(\"Next phu hop voi more\", function () {",
+                  "  if (body.page.more) pm.expect(body.page.next).to.be.a(\"string\");",
+                  "  else pm.expect(body.page.next).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 - Multi sort khac chieu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=tech&sort=price,-title,id&limit=100",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "price,-title,id"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Dung genre tech\", function () {",
+                  "  body.data.forEach(book => pm.expect(book.category.slug).to.eql(\"tech\"));",
+                  "});",
+                  "pm.test(\"Gia tang, title giam, id tang\", function () {",
+                  "  for (let i = 1; i < body.data.length; i++) {",
+                  "    const a = body.data[i - 1], b = body.data[i];",
+                  "    const ok = a.price_vnd < b.price_vnd ||",
+                  "      (a.price_vnd === b.price_vnd && (a.title > b.title ||",
+                  "       (a.title === b.title && a.id < b.id)));",
+                  "    pm.expect(ok).to.eql(true);",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Genre khong co sach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=not-a-real-genre-btvn2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "not-a-real-genre-btvn2"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Danh sach sach\", function () { pm.expect(body.data).to.be.an(\"array\"); });",
+                  "pm.test(\"Ket qua rong\", function () {",
+                  "  pm.expect(body.data).to.eql([]);",
+                  "  pm.expect(body.page).to.eql({next: null, more: false});",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Validation",
+      "item": [
+        {
+          "name": "09 - Doi sort khi dung cursor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=tech&sort=price,title&cursor={{first_cursor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "tech"
+                },
+                {
+                  "key": "sort",
+                  "value": "price,title"
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{first_cursor}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"sort_chg\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 - Doi genre khi dung cursor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=cursor&genre=fiction&sort=-price,title&cursor={{first_cursor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "cursor"
+                },
+                {
+                  "key": "genre",
+                  "value": "fiction"
+                },
+                {
+                  "key": "sort",
+                  "value": "-price,title"
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{first_cursor}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"filter_chg\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 - Sort ngoai whitelist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?sort=foo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "foo"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_sort\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 - Sort lap khoa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?sort=price,-price",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "price,-price"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_sort\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 - Offset am",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&offset=-1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "offset",
+                  "value": "-1"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_offset\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 - Limit bang 0",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?limit=0",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_limit\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 - Strategy sai",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=foo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "foo"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_strategy\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 - Cursor hong",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?cursor=not-valid!",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "cursor",
+                  "value": "not-valid!"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_cursor\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 - Genre rong",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?genre=",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "genre",
+                  "value": ""
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"bad_genre\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 - Tron offset va cursor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/books?strategy=offset&cursor={{first_cursor}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "books"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "offset"
+                },
+                {
+                  "key": "cursor",
+                  "value": "{{first_cursor}}"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Ma loi\", function () { pm.expect(pm.response.json().error).to.eql(\"cursor_with_offset\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,642 @@
+BTVN 2 - Actual curl HTTP responses for all 18 collection requests.
+Isolated SQLite memory database, populated by seed_lab2.py.
+
+01 - Offset trang dau
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode genre=tech --data-urlencode sort=-price,title --data-urlencode offset=0 --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 786
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 1,
+      "isbn": "9780132350884",
+      "price_vnd": 450000,
+      "stock": 10,
+      "title": "Clean Code"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 5,
+      "isbn": "9780000000104",
+      "price_vnd": 300000,
+      "stock": 5,
+      "title": "Data Modeling"
+    }
+  ],
+  "pagination": {
+    "has_next": true,
+    "limit": 2,
+    "offset": 0,
+    "total": 5
+  }
+}
+
+
+02 - Offset trang tiep
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode genre=tech --data-urlencode sort=-price,title --data-urlencode offset=2 --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 787
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 3,
+      "isbn": "9780000000102",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "REST API"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 4,
+      "isbn": "9780000000103",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "SQLAlchemy Basics"
+    }
+  ],
+  "pagination": {
+    "has_next": true,
+    "limit": 2,
+    "offset": 2,
+    "total": 5
+  }
+}
+
+
+03 - Offset vuot cuoi
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode genre=tech --data-urlencode offset=999999 --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 116
+Connection: close
+
+{
+  "data": [],
+  "pagination": {
+    "has_next": false,
+    "limit": 2,
+    "offset": 999999,
+    "total": 5
+  }
+}
+
+
+04 - Offset limit toi da
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode limit=1000
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 2139
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 2,
+        "name": "Fiction",
+        "slug": "fiction"
+      },
+      "id": 6,
+      "isbn": "9780000000105",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "A Short Story"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 5,
+      "isbn": "9780000000104",
+      "price_vnd": 300000,
+      "stock": 5,
+      "title": "Data Modeling"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 4,
+      "isbn": "9780000000103",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "SQLAlchemy Basics"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 3,
+      "isbn": "9780000000102",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "REST API"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 2,
+      "isbn": "9780000000101",
+      "price_vnd": 100000,
+      "stock": 5,
+      "title": "Flask Basics"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 1,
+      "isbn": "9780132350884",
+      "price_vnd": 450000,
+      "stock": 10,
+      "title": "Clean Code"
+    }
+  ],
+  "pagination": {
+    "has_next": false,
+    "limit": 100,
+    "offset": 0,
+    "total": 6
+  }
+}
+
+
+05 - Cursor trang dau
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=tech --data-urlencode sort=-price,title --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 874
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 1,
+      "isbn": "9780132350884",
+      "price_vnd": 450000,
+      "stock": 10,
+      "title": "Clean Code"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 5,
+      "isbn": "9780000000104",
+      "price_vnd": 300000,
+      "stock": 5,
+      "title": "Data Modeling"
+    }
+  ],
+  "page": {
+    "more": true,
+    "next": "eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzMwMDAwMCwgIkRhdGEgTW9kZWxpbmciLCA1XSwgImYiOiB7ImNhdGVnb3J5IjogbnVsbCwgImdlbnJlIjogInRlY2gifX0"
+  }
+}
+
+
+06 - Cursor trang tiep
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=tech --data-urlencode sort=-price,title --data-urlencode limit=2 --data-urlencode cursor=eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzMwMDAwMCwgIkRhdGEgTW9kZWxpbmciLCA1XSwgImYiOiB7ImNhdGVnb3J5IjogbnVsbCwgImdlbnJlIjogInRlY2gifX0
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:45 GMT
+Content-Type: application/json
+Content-Length: 880
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 3,
+      "isbn": "9780000000102",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "REST API"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 4,
+      "isbn": "9780000000103",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "SQLAlchemy Basics"
+    }
+  ],
+  "page": {
+    "more": true,
+    "next": "eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzE1MDAwMCwgIlNRTEFsY2hlbXkgQmFzaWNzIiwgNF0sICJmIjogeyJjYXRlZ29yeSI6IG51bGwsICJnZW5yZSI6ICJ0ZWNoIn19"
+  }
+}
+
+
+07 - Multi sort khac chieu
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=tech --data-urlencode sort=price,-title,id --data-urlencode limit=100
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 1758
+Connection: close
+
+{
+  "data": [
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 2,
+      "isbn": "9780000000101",
+      "price_vnd": 100000,
+      "stock": 5,
+      "title": "Flask Basics"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 4,
+      "isbn": "9780000000103",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "SQLAlchemy Basics"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 3,
+      "isbn": "9780000000102",
+      "price_vnd": 150000,
+      "stock": 5,
+      "title": "REST API"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 5,
+      "isbn": "9780000000104",
+      "price_vnd": 300000,
+      "stock": 5,
+      "title": "Data Modeling"
+    },
+    {
+      "authors": [
+        {
+          "id": 1,
+          "name": "Robert C. Martin"
+        }
+      ],
+      "category": {
+        "id": 1,
+        "name": "Technology",
+        "slug": "tech"
+      },
+      "id": 1,
+      "isbn": "9780132350884",
+      "price_vnd": 450000,
+      "stock": 10,
+      "title": "Clean Code"
+    }
+  ],
+  "page": {
+    "more": false,
+    "next": null
+  }
+}
+
+
+08 - Genre khong co sach
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=not-a-real-genre-btvn2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 70
+Connection: close
+
+{
+  "data": [],
+  "page": {
+    "more": false,
+    "next": null
+  }
+}
+
+
+09 - Doi sort khi dung cursor
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=tech --data-urlencode sort=price,title --data-urlencode cursor=eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzMwMDAwMCwgIkRhdGEgTW9kZWxpbmciLCA1XSwgImYiOiB7ImNhdGVnb3J5IjogbnVsbCwgImdlbnJlIjogInRlY2gifX0
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 26
+Connection: close
+
+{
+  "error": "sort_chg"
+}
+
+
+10 - Doi genre khi dung cursor
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=cursor --data-urlencode genre=fiction --data-urlencode sort=-price,title --data-urlencode cursor=eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzMwMDAwMCwgIkRhdGEgTW9kZWxpbmciLCA1XSwgImYiOiB7ImNhdGVnb3J5IjogbnVsbCwgImdlbnJlIjogInRlY2gifX0
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 28
+Connection: close
+
+{
+  "error": "filter_chg"
+}
+
+
+11 - Sort ngoai whitelist
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode sort=foo
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 26
+Connection: close
+
+{
+  "error": "bad_sort"
+}
+
+
+12 - Sort lap khoa
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode sort=price,-price
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 26
+Connection: close
+
+{
+  "error": "bad_sort"
+}
+
+
+13 - Offset am
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode offset=-1
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:46 GMT
+Content-Type: application/json
+Content-Length: 28
+Connection: close
+
+{
+  "error": "bad_offset"
+}
+
+
+14 - Limit bang 0
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode limit=0
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:47 GMT
+Content-Type: application/json
+Content-Length: 27
+Connection: close
+
+{
+  "error": "bad_limit"
+}
+
+
+15 - Strategy sai
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=foo
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:47 GMT
+Content-Type: application/json
+Content-Length: 30
+Connection: close
+
+{
+  "error": "bad_strategy"
+}
+
+
+16 - Cursor hong
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode cursor=not-valid!
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:47 GMT
+Content-Type: application/json
+Content-Length: 28
+Connection: close
+
+{
+  "error": "bad_cursor"
+}
+
+
+17 - Genre rong
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode genre=
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:47 GMT
+Content-Type: application/json
+Content-Length: 27
+Connection: close
+
+{
+  "error": "bad_genre"
+}
+
+
+18 - Tron offset va cursor
+curl.exe -sS -i -G http://127.0.0.1:56713/api/v1/books --data-urlencode strategy=offset --data-urlencode cursor=eyJzIjogIi1wcmljZSx0aXRsZSIsICJ2IjogWzMwMDAwMCwgIkRhdGEgTW9kZWxpbmciLCA1XSwgImYiOiB7ImNhdGVnb3J5IjogbnVsbCwgImdlbnJlIjogInRlY2gifX0
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 12:21:47 GMT
+Content-Type: application/json
+Content-Length: 36
+Connection: close
+
+{
+  "error": "cursor_with_offset"
+}
+
