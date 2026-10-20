@@ -1,0 +1,145 @@
+Lab 2 - Actual curl HTTP responses on an isolated SQLite memory database.
+
+01-default
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:04 GMT
+Content-Type: application/json
+Content-Length: 440
+Connection: close
+
+{"data":[{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":6,"isbn":"0000000000006","price_vnd":400000,"stock":5,"title":"Book 6"},{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":2,"name":"Fiction","slug":"fiction"},"id":5,"isbn":"0000000000005","price_vnd":150000,"stock":5,"title":"Book 5"}],"page":{"more":true,"next":"eyJzIjogIi1pZCIsICJ2IjogNSwgImkiOiA1LCAiYyI6IG51bGx9"}}
+
+
+02-filter-price
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=1 --data-urlencode sort=price --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:04 GMT
+Content-Type: application/json
+Content-Length: 446
+Connection: close
+
+{"data":[{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":2,"isbn":"0000000000002","price_vnd":100000,"stock":5,"title":"Book 2"},{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":3,"isbn":"0000000000003","price_vnd":150000,"stock":5,"title":"Book 3"}],"page":{"more":true,"next":"eyJzIjogInByaWNlIiwgInYiOiAxNTAwMDAsICJpIjogMywgImMiOiAxfQ"}}
+
+
+03-next-page
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=1 --data-urlencode sort=price --data-urlencode limit=2 --data-urlencode cursor=eyJzIjogInByaWNlIiwgInYiOiAxNTAwMDAsICJpIjogMywgImMiOiAxfQ
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:04 GMT
+Content-Type: application/json
+Content-Length: 446
+Connection: close
+
+{"data":[{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":4,"isbn":"0000000000004","price_vnd":150000,"stock":5,"title":"Book 4"},{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":1,"isbn":"0000000000001","price_vnd":300000,"stock":5,"title":"Book 1"}],"page":{"more":true,"next":"eyJzIjogInByaWNlIiwgInYiOiAzMDAwMDAsICJpIjogMSwgImMiOiAxfQ"}}
+
+
+04-last-page
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=1 --data-urlencode sort=price --data-urlencode limit=2 --data-urlencode cursor=eyJzIjogInByaWNlIiwgInYiOiAzMDAwMDAsICJpIjogMSwgImMiOiAxfQ
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:04 GMT
+Content-Type: application/json
+Content-Length: 218
+Connection: close
+
+{"data":[{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":6,"isbn":"0000000000006","price_vnd":400000,"stock":5,"title":"Book 6"}],"page":{"more":false,"next":null}}
+
+
+05-desc-price
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode sort=-price --data-urlencode limit=2
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 451
+Connection: close
+
+{"data":[{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":6,"isbn":"0000000000006","price_vnd":400000,"stock":5,"title":"Book 6"},{"authors":[{"id":1,"name":"Lab Author"}],"category":{"id":1,"name":"Technology","slug":"tech"},"id":1,"isbn":"0000000000001","price_vnd":300000,"stock":5,"title":"Book 1"}],"page":{"more":true,"next":"eyJzIjogIi1wcmljZSIsICJ2IjogMzAwMDAwLCAiaSI6IDEsICJjIjogbnVsbH0"}}
+
+
+06-bad-sort
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode sort=foo
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 21
+Connection: close
+
+{"error":"bad_sort"}
+
+
+07-multi-sort
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode sort=-price,title
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 21
+Connection: close
+
+{"error":"bad_sort"}
+
+
+08-sort-changed
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=1 --data-urlencode sort=-price --data-urlencode cursor=eyJzIjogInByaWNlIiwgInYiOiAxNTAwMDAsICJpIjogMywgImMiOiAxfQ
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 21
+Connection: close
+
+{"error":"sort_chg"}
+
+
+09-filter-changed
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=2 --data-urlencode sort=price --data-urlencode cursor=eyJzIjogInByaWNlIiwgInYiOiAxNTAwMDAsICJpIjogMywgImMiOiAxfQ
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 23
+Connection: close
+
+{"error":"filter_chg"}
+
+
+10-bad-cursor
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode cursor=not-valid!
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 23
+Connection: close
+
+{"error":"bad_cursor"}
+
+
+11-bad-limit
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode limit=0
+HTTP/1.0 400 BAD REQUEST
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 22
+Connection: close
+
+{"error":"bad_limit"}
+
+
+12-empty
+curl.exe -sS -i -G http://127.0.0.1:56389/api/v1/books --data-urlencode category=999999
+HTTP/1.0 200 OK
+Server: Werkzeug/3.1.8 Python/3.14.7
+Date: Tue, 20 Oct 2026 11:39:05 GMT
+Content-Type: application/json
+Content-Length: 46
+Connection: close
+
+{"data":[],"page":{"more":false,"next":null}}
+

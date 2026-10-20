@@ -2,7 +2,10 @@ import json
 from pathlib import Path
 from flask import Blueprint, jsonify, request
 from jsonschema import validate, ValidationError
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload, selectinload
 from models import db, Book, Author, Category, User, Review
+from routes.pagination import parse_sort, apply_cursor, build_response, MAX_INT
 
 books = Blueprint("books", __name__)
 with open(Path(__file__).resolve().parents[1] / "schemas/book.json", encoding="utf-8") as f:
@@ -24,7 +27,37 @@ def check_book_data(data):
 
 @books.get("")
 def get_books():
-    return jsonify([book.to_dict() for book in Book.query.all()])
+    try:
+        limit = int(request.args.get("limit", "20"))
+        if limit < 1:
+            raise ValueError
+        limit = min(limit, 100)
+    except ValueError:
+        return jsonify({"error": "bad_limit"}), 400
+
+    category = request.args.get("category")
+    if category is not None:
+        try:
+            category = int(category)
+            if not 1 <= category <= MAX_INT:
+                raise ValueError
+        except ValueError:
+            return jsonify({"error": "bad_category"}), 400
+
+    sort = request.args.get("sort", "-id")
+    try:
+        p, cols, desc = parse_sort(sort)
+        query = select(Book).options(joinedload(Book.category), selectinload(Book.authors))
+        query = query.order_by(*cols)
+        if category is not None:
+            query = query.where(Book.category_id == category)
+        query = apply_cursor(query, request.args.get("cursor"), sort, p, desc, category)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+    # Lay du 1 sach de biet con trang sau hay khong.
+    rows = db.session.scalars(query.limit(limit + 1)).all()
+    return build_response(rows[:limit], sort, p, len(rows) > limit, category)
 
 
 @books.get("/<int:book_id>")
