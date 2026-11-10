@@ -2,6 +2,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from models import db
 from routes import products_bp
+from routes_orders import orders_bp
 
 def create_app():
     app = Flask(__name__)
@@ -13,7 +14,7 @@ def create_app():
     Migrate(app, db)
 
     app.register_blueprint(products_bp)
-
+    app.register_blueprint(orders_bp)
     return app
 
 if __name__ == "__main__":
