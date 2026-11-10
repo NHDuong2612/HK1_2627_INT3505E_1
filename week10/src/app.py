@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from models import db
 from routes import products_bp
 from routes_orders import orders_bp
+from routes_health import health_bp
 
 def create_app():
     app = Flask(__name__)
@@ -15,6 +16,7 @@ def create_app():
 
     app.register_blueprint(products_bp)
     app.register_blueprint(orders_bp)
+    app.register_blueprint(health_bp)
     return app
 
 if __name__ == "__main__":
