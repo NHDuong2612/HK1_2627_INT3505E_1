@@ -1,0 +1,55 @@
+extends: spectral:oas
+rules:
+  # This local lab does not publish support contact details.
+  info-contact: off
+  operation-operationId: error
+  response-204-no-content:
+    description: HTTP 204 responses must not declare a body.
+    severity: error
+    given: "$.paths[*][*].responses['204']"
+    then:
+      field: content
+      function: undefined
+  book-year-integer:
+    description: Book.year must have type integer.
+    severity: error
+    given: "$.components.schemas.Book.properties.year"
+    then:
+      field: type
+      function: pattern
+      functionOptions:
+        match: "^integer$"
+  response-200-schema-has-fields:
+    description: A 200 response must describe at least one object field, directly or in its array items.
+    severity: error
+    given: "$.paths[*][*].responses['200']"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [content]
+          properties:
+            content:
+              type: object
+              minProperties: 1
+              additionalProperties:
+                type: object
+                required: [schema]
+                properties:
+                  schema:
+                    type: object
+                    anyOf:
+                      - required: [type, properties]
+                        properties:
+                          type: {const: object}
+                          properties: {type: object, minProperties: 1}
+                      - required: [type, items]
+                        properties:
+                          type: {const: array}
+                          items:
+                            type: object
+                            required: [type, properties]
+                            properties:
+                              type: {const: object}
+                              properties: {type: object, minProperties: 1}
