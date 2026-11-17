@@ -65,22 +65,37 @@ spectral lint openapi.yaml --ruleset .spectral.yml
 
 `.spectral.yml` đã có hai rule riêng kiểm tra (2) và (3); `spectral:oas` kiểm tra các quy tắc nền, bao gồm operationId. Hãy sửa 3 lỗi trong spec và **tự bổ sung custom rule** kiểm tra response 200 có schema không rỗng. Lưu ý: Spectral linter không tự đối chiếu code Flask; một spec hợp lệ vẫn có thể khác hành vi thực tế. Hãy dùng pytest + jsonschema để kiểm chứng response.
 
-## 4. Lab 3 — Postman/Newman
+## 4. Lab 3 - Postman/Newman
 
-File `books-api.postman_collection.json` chứa 5 happy-path requests chạy theo thứ tự: list → create → get → update → delete. Request tạo lưu `book_id` trong collection variables. Hãy:
+The collection runs five Books CRUD requests, then checks two error responses.
+POST saves the generated `book_id` as a collection variable. GET, PUT, and
+DELETE use that ID. The error requests check status and JSON error details.
 
-- Tạo folder `error-cases/` với **POST /books** thiếu `title` và **GET /books/9999**.
-- Thêm **ít nhất 2 `pm.test` cho mỗi error request**: HTTP status và JSON `code`/`message`.
-- Chạy bằng Newman, lưu JUnit report.
+| Request | Expected response |
+| --- | --- |
+| POST /books without title | 400, `VALIDATION_ERROR`, and a detail for `title` |
+| GET /books/9999 | 404 and `NOT_FOUND` |
 
-```bash
-npm install -g newman
-newman run books-api.postman_collection.json \
-  -e postman/local.postman_environment.json \
-  -r cli,junit --reporter-junit-export reports/junit.xml
+Run both terminals from `week11/lab08-starter`. In terminal 1, with the Python
+dependencies installed, start the local API:
+
+```powershell
+python -m app --port 5000
 ```
 
-Lưu ý: cần chạy server trước. `data.csv` là dữ liệu ví dụ để thực hành data-driven iteration; khi sử dụng `-d data.csv`, collection sẽ lặp theo số hàng. Đừng hard-code credentials/tokens trong file đẩy lên Git.
+On Windows, if you already have the project's virtual environment, you can
+run `./.venv/Scripts/python.exe -m app --port 5000` instead.
+
+In terminal 2, run the collection and generate the JUnit report:
+
+```powershell
+npm install -g newman
+newman run books-api.postman_collection.json -e postman/local.postman_environment.json -r cli,junit --reporter-junit-export reports/junit.xml
+```
+
+Install Newman once. Use a local test database where book ID 9999 does not
+exist. A successful run executes seven requests and fourteen assertions.
+`data.csv` is sample input for separate data-driven runs via `-d data.csv`.
 
 ## 5. Lab 4 — Locust
 
