@@ -1,5 +1,5 @@
-![Chạy server](./images/Screenshot 2026-11-17 113740.png)
+![Chạy server](./images/Screenshot%202026-11-17%20113740.png)
 
-![Chạy newman happy-path](./images/Screenshot 2026-11-17 114601.png)
+![Chạy Newman happy-path](./images/Screenshot%202026-11-17%20114601.png)
 
-![Chạy newman error-case](./images/Screenshot 2026-11-17 114630.png)
+![Chạy Newman error-case](./images/Screenshot%202026-11-17%20114630.png)
