@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 
 from blueprints.v1 import bp as v1_bp
 from blueprints.v2 import bp as v2_bp
+from gateway import dispatch
 
 
 app = Flask(__name__)
@@ -47,3 +48,11 @@ def get_user(version, uid):
     if version == "1":
         return {"id": uid, "full_name": f"{user['first_name']} {user['last_name']}"}
     return {"id": uid, **user}
+
+
+@app.post("/orders")
+def create_order():
+    which, result = dispatch(request.get_json())
+    response = jsonify(result)
+    response.headers["X-Order-Handler"] = which
+    return response, 201 if which == "v2" else 200
